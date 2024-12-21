@@ -1,7 +1,7 @@
 #include "conf.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <wordexp.h>
 
 size_t HASHSIZE = 37;
 size_t KV_STR_SIZE = 64; 
@@ -23,7 +23,7 @@ void set_config_value(ConfigItem *config_item, char *value){
 
 
 // djb2 hash algo
-unsigned long hash(unsigned char *str)
+static unsigned long hash(unsigned char *str)
 {
     unsigned long hash = 5381;
     int c;
@@ -43,8 +43,12 @@ ApplicationConfig loadConfig(char* file_name) {
     ApplicationConfig app_config;
 
     ConfigItem *configItems = malloc(sizeof(*configItems)*HASHSIZE);
+    
+    wordexp_t exp_ret;
+    wordexp(file_name, &exp_ret, 0);
+    
     FILE* fp;
-    fp = fopen(file_name, "r");
+    fp = fopen(exp_ret.we_wordv[0], "r");
     if (fp == NULL) {
         printf("Could not read config file!");
         exit(0);
@@ -55,6 +59,9 @@ ApplicationConfig loadConfig(char* file_name) {
     int index_increment = 0;
     while (fgets(line, sizeof(line), fp))
     {
+        if (line[0] == '#') {
+            continue; // Skip this line
+        }
         //KVs for now can only be 63 chars in length 
         char *key = malloc(sizeof(char)*KV_STR_SIZE);
         char *value = malloc(sizeof(char)*KV_STR_SIZE);
@@ -81,7 +88,7 @@ ApplicationConfig loadConfig(char* file_name) {
 }
 
 int main() {
-    ApplicationConfig app_config = loadConfig("app.conf");
+    ApplicationConfig app_config = loadConfig("~/romsync/app.conf");
     printf("%s\n", get_value_from_key(&app_config,  "savesfolder"));
     return 0;
 }

@@ -1,5 +1,5 @@
 #ifndef CONF_H
-#define CONF_h
+#define CONF_H
 
 #include <stdlib.h>
 
